@@ -6,8 +6,8 @@ ORIGINAL_DIR="$SCRIPT_DIR/original_videos"  # 原始视频目录
 TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 转码后视频目录
 STREAM_SCRIPT_NAME="stream.sh"
 MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
-GITHUB_MAIN_SCRIPT_URL="https://www.ghproxy.cn/https://github.com/lujih/bilibili_live/raw/main/bilibili_live_manager.sh"
-GITHUB_STREAM_SCRIPT_URL="https://www.ghproxy.cn/https://github.com/lujih/bilibili_live/raw/main/stream.sh"
+GITHUB_MAIN_SCRIPT_URL="https://ghp.ci/https://github.com/lujih/bilibili_live/raw/main/bilibili_live_manager.sh"
+GITHUB_STREAM_SCRIPT_URL="https://ghp.ci/https://github.com/lujih/bilibili_live/raw/main/stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
 MAIN_SCRIPT_PATH="$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
 
@@ -45,23 +45,33 @@ check_and_download_scripts() {
     echo "推流脚本准备完成！"
 }
 
-# 更新主脚本和推流脚本
 update_scripts() {
     echo "更新主脚本..."
+    if [ -f "$MAIN_SCRIPT_PATH" ]; then
+        chmod +w "$MAIN_SCRIPT_PATH"
+    fi
     curl -L "$GITHUB_MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || {
         echo "主脚本更新失败，请检查网络连接！"
         return
     }
+
+    # 验证主脚本是否正确下载
+    if ! grep -q "main_menu()" "$MAIN_SCRIPT_PATH"; then
+        echo "主脚本下载失败，文件内容不完整！"
+        return
+    fi
+
     echo "更新推流脚本..."
+    if [ -f "$STREAM_SCRIPT_PATH" ]; then
+        chmod +w "$STREAM_SCRIPT_PATH"
+    fi
     curl -L "$GITHUB_STREAM_SCRIPT_URL" -o "$STREAM_SCRIPT_PATH" || {
         echo "推流脚本更新失败，请检查网络连接！"
         return
     }
-    chmod +x "$MAIN_SCRIPT_PATH" "$STREAM_SCRIPT_PATH"
-    echo "脚本更新完成！"
 
-    # 自动重启脚本
-    echo "脚本已更新，正在重启..."
+    chmod +x "$MAIN_SCRIPT_PATH" "$STREAM_SCRIPT_PATH"
+    echo "脚本更新完成！正在重启..."
     exec bash "$MAIN_SCRIPT_PATH"
 }
 
