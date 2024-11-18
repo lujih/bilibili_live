@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# 检查是否具有 root 权限
+if [ "$(id -u)" -ne 0 ]; then
+    echo "请使用 root 权限运行此脚本！"
+    echo "示例：sudo $0"
+    exit 1
+fi
+
 # 常量定义
 # 记录脚本所在目录和初始运行目录
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -179,7 +186,8 @@ exit_script() {
         echo "无法切换到脚本目录！"
         exit 1
     }
-    exit 0
+    echo "脚本退出完成。"
+    return 0  # 使用 `return` 而不是 `exit`，保留当前会话
 }
 
 # 主菜单
