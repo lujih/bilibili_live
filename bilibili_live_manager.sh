@@ -66,13 +66,11 @@ while true; do
     for video in "${video_files[@]}"; do
         if [ -f "$video" ]; then
             echo "正在推流文件：$video"
-            # 优化参数：
-            # - `-threads 1`: 限制 CPU 使用线程数，降低多核消耗
-            # - `-preset veryfast`: 使用高效编码预设
-            # - `-max_muxing_queue_size 1024`: 防止队列溢出导致的缓冲问题
-            # - `-re`: 按视频原始帧率推流
-            ffmpeg -re -threads 1 -i "$video" -c:v copy -c:a copy -preset veryfast \
-                   -max_muxing_queue_size 1024 -f flv "$STREAM_URL" || {
+            # 优化推流参数以提升画质
+            ffmpeg -re -i "$video" \
+                   -vf "scale=1280:-1" -c:v libx264 -preset medium -crf 23 \
+                   -c:a aac -b:a 128k \
+                   -f flv "$STREAM_URL" || {
                 echo "推流文件 $video 时发生错误，跳过..."
                 continue
             }
