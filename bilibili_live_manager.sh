@@ -245,7 +245,7 @@ main_menu() {
         6) stop_stream ;;
         7) cpu_stress_test ;;
         8) uninstall_script ;;  # 添加卸载功能
-        9) exit_script ;;
+        9) echo "退出脚本。"; exit 0 ;;
         *) echo "无效选项，请重新输入！" ;;
         esac
         echo "按任意键返回主菜单..."
