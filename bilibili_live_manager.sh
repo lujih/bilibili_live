@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # 常量定义
+# 记录脚本所在目录和初始运行目录
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+INITIAL_DIR=$(pwd)
 ORIGINAL_DIR="$SCRIPT_DIR/original_videos"  # 原始视频目录
 TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 转码后视频目录
 STREAM_SCRIPT_NAME="stream.sh"
@@ -170,6 +172,16 @@ cpu_stress_test() {
     echo "请观察 CPU 使用率，选择合适的码率进行推流。"
 }
 
+#脚本退出
+exit_script() {
+    echo "正在返回到脚本所在目录：$SCRIPT_DIR"
+    cd "$SCRIPT_DIR" || {
+        echo "无法切换到脚本目录！"
+        exit 1
+    }
+    exit 0
+}
+
 # 主菜单
 main_menu() {
     while true; do
@@ -197,7 +209,7 @@ main_menu() {
         5) start_stream ;;
         6) stop_stream ;;
         7) cpu_stress_test ;;
-        8) cd "$SCRIPT_DIR" && exit 0 ;;  # 返回脚本目录并退出
+        8) exit_script ;;  # 改为调用退出函数
         *) echo "无效选项，请重新输入！" ;;
         esac
         echo "按任意键返回主菜单..."
