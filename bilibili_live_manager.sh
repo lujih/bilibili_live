@@ -5,8 +5,11 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ORIGINAL_DIR="$SCRIPT_DIR/original_videos"  # 原始视频目录
 TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 转码后视频目录
 STREAM_SCRIPT_NAME="stream.sh"
-GITHUB_REPO="https://github.com/lujih/bilibili_live.git"
+MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
+GITHUB_MAIN_SCRIPT_URL="https://github.com/lujih/bilibili_live/raw/main/bilibili_live_manager.sh"
+GITHUB_STREAM_SCRIPT_URL="https://github.com/lujih/bilibili_live/raw/main/stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
+MAIN_SCRIPT_PATH="$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
 STREAM_URL=""
 
 # 初始化文件夹
@@ -21,19 +24,19 @@ setup_folders() {
 # 安装依赖
 install_dependencies() {
     echo "正在安装必要依赖..."
-    apt update && apt install -y ffmpeg screen git || {
+    apt update && apt install -y ffmpeg screen curl || {
         echo "依赖安装失败，请检查网络连接！"
         exit 1
     }
     echo "依赖安装完成！"
 }
 
-# 检查并拉取推流脚本
-check_and_pull_stream_script() {
+# 检查并下载推流脚本
+check_and_download_scripts() {
     if [ ! -f "$STREAM_SCRIPT_PATH" ]; then
-        echo "推流脚本未检测到，从 GitHub 仓库拉取..."
-        git clone "$GITHUB_REPO" "$SCRIPT_DIR" || {
-            echo "从 GitHub 拉取脚本失败，请检查仓库地址！"
+        echo "推流脚本未检测到，正在从 GitHub 下载..."
+        curl -L "$GITHUB_STREAM_SCRIPT_URL" -o "$STREAM_SCRIPT_PATH" || {
+            echo "推流脚本下载失败，请检查网络连接！"
             exit 1
         }
     else
@@ -43,15 +46,19 @@ check_and_pull_stream_script() {
     echo "推流脚本准备完成！"
 }
 
-# 更新脚本
+# 更新主脚本和推流脚本
 update_scripts() {
-    echo "从 GitHub 仓库更新脚本..."
-    git -C "$SCRIPT_DIR" pull "$GITHUB_REPO" || {
-        echo "更新失败，请检查仓库地址！"
-        exit 1
+    echo "更新主脚本..."
+    curl -L "$GITHUB_MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || {
+        echo "主脚本更新失败，请检查网络连接！"
+        return
     }
-    chmod +x "$SCRIPT_DIR/bilibili_live_manager.sh"
-    chmod +x "$STREAM_SCRIPT_PATH"
+    echo "更新推流脚本..."
+    curl -L "$GITHUB_STREAM_SCRIPT_URL" -o "$STREAM_SCRIPT_PATH" || {
+        echo "推流脚本更新失败，请检查网络连接！"
+        return
+    }
+    chmod +x "$MAIN_SCRIPT_PATH" "$STREAM_SCRIPT_PATH"
     echo "脚本更新完成！"
 }
 
@@ -161,5 +168,5 @@ main_menu() {
 
 # 初始化操作并启动菜单
 setup_folders
-check_and_pull_stream_script
+check_and_download_scripts
 main_menu
