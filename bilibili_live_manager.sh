@@ -44,17 +44,42 @@ if [ -z "$STREAM_URL" ]; then
 fi
 
 echo "推流地址：$STREAM_URL"
+echo "视频目录：$VIDEO_DIR"
 
+# 检查视频目录是否存在
+if [ ! -d "$VIDEO_DIR" ]; then
+    echo "视频目录不存在：$VIDEO_DIR"
+    exit 1
+fi
+
+# 推流循环
 while true; do
-    for video in "$VIDEO_DIR"/*; do
+    video_files=("$VIDEO_DIR"/*)
+    video_count=${#video_files[@]}
+
+    if [ $video_count -eq 0 ]; then
+        echo "视频目录为空，请添加视频后重试..."
+        sleep 10
+        continue
+    fi
+
+    for video in "${video_files[@]}"; do
         if [ -f "$video" ]; then
             echo "正在推流文件：$video"
-            ffmpeg -re -i "$video" -c:v copy -c:a copy -f flv "$STREAM_URL"
-        else
-            echo "视频目录中没有文件，等待添加视频..."
-            sleep 10
+            # 优化参数：
+            # - `-threads 1`: 限制 CPU 使用线程数，降低多核消耗
+            # - `-preset veryfast`: 使用高效编码预设
+            # - `-max_muxing_queue_size 1024`: 防止队列溢出导致的缓冲问题
+            # - `-re`: 按视频原始帧率推流
+            ffmpeg -re -threads 1 -i "$video" -c:v copy -c:a copy -preset veryfast \
+                   -max_muxing_queue_size 1024 -f flv "$STREAM_URL" || {
+                echo "推流文件 $video 时发生错误，跳过..."
+                continue
+            }
         fi
     done
+
+    echo "所有视频推流完成，将重新从第一个视频开始..."
 done
 EOF
     chmod +x "$STREAM_SCRIPT_PATH"
