@@ -123,42 +123,26 @@ transcode_video() {
 
 # 配置并启动推流（新增二级菜单）
 start_stream() {
-    echo "请选择推流平台："
-    PS3="输入选项："
-    platforms=("Bilibili" "斗鱼" "虎牙" "返回主菜单")
-    select platform in "${platforms[@]}"; do
-        case $platform in
-        "Bilibili")
-            platform_name="Bilibili"
-            break
-            ;;
-        "斗鱼")
-            platform_name="斗鱼"
-            break
-            ;;
-        "虎牙")
-            platform_name="虎牙"
-            break
-            ;;
-        "返回主菜单")
-            return
-            ;;
-        *)
-            echo "无效选项，请重新选择！"
-            ;;
-        esac
-    done
-
-    echo "请输入 $platform_name 的推流地址（包括推流码）："
+    echo "请输入推流地址（如 B站推流码）："
     read -r STREAM_URL
     if [ -z "$STREAM_URL" ]; then
         echo "推流地址不能为空！"
         return
     fi
 
-    echo "启动 $platform_name 推流服务..."
-    screen -dmS live_stream bash "$STREAM_SCRIPT_PATH" "$STREAM_URL"
-    echo "$platform_name 推流已启动，使用 'screen -r live_stream' 查看日志。"
+    # 替换推流脚本中的地址
+    if [ -f "$STREAM_SCRIPT_PATH" ]; then
+        sed -i "s|__STREAM_URL__|$STREAM_URL|g" "$STREAM_SCRIPT_PATH"
+        echo "推流地址已更新为：$STREAM_URL"
+    else
+        echo "推流脚本不存在：$STREAM_SCRIPT_PATH"
+        return
+    fi
+
+    # 启动推流服务
+    echo "启动推流服务..."
+    screen -dmS live_stream bash "$STREAM_SCRIPT_PATH"
+    echo "推流已启动，使用 'screen -r live_stream' 查看日志。"
 }
 
 # 停止推流
