@@ -59,6 +59,10 @@ update_scripts() {
     }
     chmod +x "$MAIN_SCRIPT_PATH" "$STREAM_SCRIPT_PATH"
     echo "脚本更新完成！"
+
+    # 自动重启脚本
+    echo "脚本已更新，正在重启..."
+    exec bash "$MAIN_SCRIPT_PATH"
 }
 
 # 视频转码
@@ -183,7 +187,7 @@ main_menu() {
         5) start_stream ;;
         6) stop_stream ;;
         7) cpu_stress_test ;;
-        8) exit 0 ;;
+        8) cd "$SCRIPT_DIR" && exit 0 ;;  # 返回脚本目录并退出
         *) echo "无效选项，请重新输入！" ;;
         esac
         echo "按任意键返回主菜单..."
