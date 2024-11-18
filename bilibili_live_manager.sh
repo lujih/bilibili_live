@@ -169,7 +169,7 @@ cpu_stress_test() {
 }
 
 # 更新主脚本
-update_main_script() {
+update_scripts() {
     echo "正在更新主脚本..."
     curl -L "$GITHUB_MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || {
         echo "主脚本更新失败，请检查网络连接！"
