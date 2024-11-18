@@ -21,7 +21,9 @@
 
 ## 项目目录结构
 
-. ├── bilibili_live_manager.sh   # 主脚本 ├── stream.sh                  # 推流脚本 ├── original_videos/           # 原始视频存放目录 └── videos/                    # 转码后视频存放目录
+. ├── bilibili_live_manager.sh # 主脚本 
+├── stream.sh   # 推流脚本 
+├── original_videos/ # 原始视频存放目录 └── videos/   # 转码后视频存放目录
 
 ---
 
@@ -33,7 +35,7 @@
 
 ### 2. 安装步骤  
 #### （1）克隆仓库  
-```bash
+```
 git clone https://github.com/lujih/bilibili_live.git
 cd bilibili_live
 ```
@@ -104,9 +106,7 @@ videos/：存放转码后的视频。
 
 生成不同码率的视频以检测 CPU 负载，帮助用户选择合适的推流码率。
 
-```bash
-
-###注意事项
+## 注意事项
 
 1. 推流地址
 在运行推流服务时，请确保输入正确的推流地址（如 B 站推流码）。
@@ -118,7 +118,6 @@ videos/：存放转码后的视频。
 
 3. 网络限制
 如果服务器无法访问 raw.githubusercontent.com，请参考 解决方法 修改脚本下载链接。
-```
 
 
 
