@@ -38,21 +38,21 @@ git clone https://github.com/lujih/bilibili_live.git
 cd bilibili_live
 ```
 
-####（2）赋予脚本执行权限
+#### （2）赋予脚本执行权限
 ```
 chmod +x bilibili_live_manager.sh
 chmod +x stream.sh
 ```
-####（3）运行主脚本
+#### （3）运行主脚本
 ```
 ./bilibili_live_manager.sh
 ```
 
 ---
 
-###使用指南
+## 使用指南
 
-####主菜单功能
+### 主菜单功能
 
 运行脚本后，您将看到以下菜单：
 ```
@@ -69,7 +69,7 @@ chmod +x stream.sh
   8. 退出脚本
 =====================================
 ```
-####功能详情
+### 功能详情
 
 1. 安装环境依赖
 
@@ -124,7 +124,7 @@ videos/：存放转码后的视频。
 
 ---
 
-###贡献指南
+## 贡献指南
 
 欢迎贡献代码、报告问题或提供建议：
 
