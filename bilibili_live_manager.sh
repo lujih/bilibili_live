@@ -180,12 +180,40 @@ update_main_script() {
     exec bash "$MAIN_SCRIPT_PATH"
 }
 
-# 卸载功能
+# 卸载脚本及其依赖
 uninstall_script() {
-    echo "正在卸载脚本和相关文件..."
-    rm -rf "$ORIGINAL_DIR" "$TRANSCODED_DIR" "$STREAM_SCRIPT_PATH" "$MAIN_SCRIPT_PATH"
-    echo "卸载完成！"
-    exit 0
+    echo "====================================="
+    echo "          🛠️ 卸载脚本及依赖工具          "
+    echo "====================================="
+    echo "即将卸载以下内容："
+    echo "1. 脚本安装的依赖（ffmpeg、screen、curl）"
+    echo "2. 所有相关文件夹："
+    echo "   - 原始视频文件夹：$ORIGINAL_DIR"
+    echo "   - 转码后视频文件夹：$TRANSCODED_DIR"
+    echo "   - 脚本本身：$MAIN_SCRIPT_PATH 和 $STREAM_SCRIPT_PATH"
+    echo "====================================="
+
+    read -p "确认卸载吗？(y/N): " confirm
+    if [[ "$confirm" =~ ^[yY]$ ]]; then
+        # 卸载依赖
+        echo "正在卸载依赖工具..."
+        apt remove --purge -y ffmpeg screen curl && apt autoremove -y || {
+            echo "依赖工具卸载失败，请手动检查！"
+        }
+        echo "依赖工具已卸载。"
+
+        # 删除文件夹和脚本
+        echo "删除脚本文件夹和脚本..."
+        rm -rf "$ORIGINAL_DIR" "$TRANSCODED_DIR" "$MAIN_SCRIPT_PATH" "$STREAM_SCRIPT_PATH" || {
+            echo "文件删除失败，请手动检查！"
+        }
+        echo "文件已删除。"
+
+        echo "卸载完成！感谢使用本脚本！"
+        exit 0
+    else
+        echo "卸载已取消。"
+    fi
 }
 
 # 主菜单
@@ -193,15 +221,15 @@ main_menu() {
     while true; do
         clear
         echo "====================================="
-        echo "        📺 哔哩哔哩无人直播管理工具        "
+        echo "        📺 多平台无人直播管理工具         "
         echo "====================================="
         echo "  1. 安装环境依赖"
         echo "  2. 初始化视频文件夹"
-        echo "  3. 转码视频（压缩码率）"
-        echo "  4. 启动推流服务"
-        echo "  5. 停止推流服务"
-        echo "  6. CPU 压力测试"
-        echo "  7. 更新主脚本"
+        echo "  3. 更新主脚本"
+        echo "  4. 转码视频（压缩码率）"
+        echo "  5. 启动推流服务"
+        echo "  6. 停止推流服务"
+        echo "  7. CPU 压力测试"
         echo "  8. 卸载脚本"
         echo "  9. 退出脚本"
         echo "====================================="
@@ -211,13 +239,13 @@ main_menu() {
         case $choice in
         1) install_dependencies ;;
         2) setup_folders ;;
-        3) transcode_video ;;
-        4) start_stream ;;
-        5) stop_stream ;;
-        6) cpu_stress_test ;;
-        7) update_main_script ;;
-        8) uninstall_script ;;
-        9) echo "退出脚本。"; exit 0 ;;
+        3) update_scripts ;;
+        4) transcode_video ;;
+        5) start_stream ;;
+        6) stop_stream ;;
+        7) cpu_stress_test ;;
+        8) uninstall_script ;;  # 添加卸载功能
+        9) exit_script ;;
         *) echo "无效选项，请重新输入！" ;;
         esac
         echo "按任意键返回主菜单..."
