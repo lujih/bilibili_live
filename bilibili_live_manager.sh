@@ -142,8 +142,19 @@ start_stream() {
 # 停止推流
 stop_stream() {
     echo "停止推流服务..."
-    screen -S live_stream -X quit
-    echo "推流服务已停止。"
+    screen_sessions=$(screen -ls | grep "\.live_stream" | awk '{print $1}')
+    
+    if [ -z "$screen_sessions" ]; then
+        echo "没有检测到正在运行的推流会话。"
+        return
+    fi
+
+    for session in $screen_sessions; do
+        echo "正在停止会话：$session"
+        screen -S "$session" -X quit
+    done
+
+    echo "所有推流会话已停止。"
 }
 
 # CPU 压力测试
