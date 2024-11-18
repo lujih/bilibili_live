@@ -22,9 +22,9 @@
 ## 项目目录结构
 ```
 . ├── bilibili_live_manager.sh # 主脚本 
-  ├── stream.sh   # 推流脚本 
+  ├── stream.sh # 推流脚本 
   ├── original_videos/ # 原始视频存放目录
-  └── videos/   # 转码后视频存放目录
+  └── videos/ # 转码后视频存放目录
 ```
 ---
 
