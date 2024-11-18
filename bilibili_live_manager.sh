@@ -6,11 +6,10 @@ ORIGINAL_DIR="$SCRIPT_DIR/original_videos"  # 原始视频目录
 TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 转码后视频目录
 STREAM_SCRIPT_NAME="stream.sh"
 MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
-GITHUB_MAIN_SCRIPT_URL="https://ghp.ci/https://github.com/lujih/bilibili_live/raw/main/bilibili_live_manager.sh"
-GITHUB_STREAM_SCRIPT_URL="https://ghp.ci/https://github.com/lujih/bilibili_live/raw/main/stream.sh"
+GITHUB_MAIN_SCRIPT_URL="https://github.com/lujih/bilibili_live/raw/main/bilibili_live_manager.sh"
+GITHUB_STREAM_SCRIPT_URL="https://github.com/lujih/bilibili_live/raw/main/stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
 MAIN_SCRIPT_PATH="$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
-STREAM_URL=""
 
 # 初始化文件夹
 setup_folders() {
@@ -99,18 +98,44 @@ transcode_video() {
     echo "转码完成，文件保存至：$output_video"
 }
 
-# 配置并启动推流
+# 配置并启动推流（新增二级菜单）
 start_stream() {
-    echo "请输入推流地址（如B站推流码）："
+    echo "请选择推流平台："
+    PS3="输入选项："
+    platforms=("Bilibili" "斗鱼" "虎牙" "返回主菜单")
+    select platform in "${platforms[@]}"; do
+        case $platform in
+        "Bilibili")
+            platform_name="Bilibili"
+            break
+            ;;
+        "斗鱼")
+            platform_name="斗鱼"
+            break
+            ;;
+        "虎牙")
+            platform_name="虎牙"
+            break
+            ;;
+        "返回主菜单")
+            return
+            ;;
+        *)
+            echo "无效选项，请重新选择！"
+            ;;
+        esac
+    done
+
+    echo "请输入 $platform_name 的推流地址（包括推流码）："
     read -r STREAM_URL
     if [ -z "$STREAM_URL" ]; then
         echo "推流地址不能为空！"
         return
     fi
 
-    echo "启动推流服务..."
+    echo "启动 $platform_name 推流服务..."
     screen -dmS live_stream bash "$STREAM_SCRIPT_PATH" "$STREAM_URL"
-    echo "推流已启动，使用 'screen -r live_stream' 查看日志。"
+    echo "$platform_name 推流已启动，使用 'screen -r live_stream' 查看日志。"
 }
 
 # 停止推流
