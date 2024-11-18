@@ -187,7 +187,7 @@ exit_script() {
         exit 1
     }
     echo "脚本退出完成。"
-    return 0  # 使用 `return` 而不是 `exit`，保留当前会话
+    exit 0  # 彻底结束脚本运行
 }
 
 # 主菜单
