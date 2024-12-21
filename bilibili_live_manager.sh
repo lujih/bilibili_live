@@ -61,16 +61,16 @@ STREAM_URL="$1"
 VIDEO_DIR="$(dirname "$(realpath "$0")")/videos"
 
 if [ -z "$STREAM_URL" ]; then
-    echo "未提供推流地址！"
+    echo -e "未提供推流地址！"
     exit 1
 fi
 
-echo "推流地址：$STREAM_URL"
-echo "视频目录：$VIDEO_DIR"
+echo -e "推流地址：$STREAM_URL"
+echo -e "视频目录：$VIDEO_DIR"
 
 # 检查视频目录是否存在
 if [ ! -d "$VIDEO_DIR" ]; then
-    echo "视频目录不存在：$VIDEO_DIR"
+    echo -e "视频目录不存在：$VIDEO_DIR"
     exit 1
 fi
 
@@ -80,26 +80,26 @@ while true; do
     video_count=${#video_files[@]}
 
     if [ $video_count -eq 0 ]; then
-        echo "视频目录为空，请添加视频后重试..."
+        echo -e "视频目录为空，请添加视频后重试..."
         sleep 10
         continue
     fi
 
     for video in "${video_files[@]}"; do
         if [ -f "$video" ]; then
-            echo "正在推流文件：$video"
-            # 优化推流参数以提升画质
+            echo -e "正在推流文件：$video"
+            
+            # 使用 copy 参数避免转码，直接推流
             ffmpeg -re -i "$video" \
-                   -vf "scale=1280:-1" -c:v libx264 -preset medium -crf 23 \
-                   -c:a aac -b:a 128k \
+                   -c:v copy -c:a copy \
                    -f flv "$STREAM_URL" || {
-                echo "推流文件 $video 时发生错误，跳过..."
+                echo -e "推流文件 $video 时发生错误，跳过..."
                 continue
             }
         fi
     done
 
-    echo "所有视频推流完成，将重新从第一个视频开始..."
+    echo -e "所有视频推流完成，将重新从第一个视频开始..."
 done
 EOF
     chmod +x "$STREAM_SCRIPT_PATH"
