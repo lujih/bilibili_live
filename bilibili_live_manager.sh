@@ -3,7 +3,7 @@
 # 常量定义
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 ORIGINAL_DIR="$SCRIPT_DIR/original_videos"  # 原始视频目录
-TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 转码后视频目录
+TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 视频目录（无需转码）
 STREAM_SCRIPT_NAME="stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
 MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
@@ -16,7 +16,7 @@ setup_folders() {
     mkdir -p "$TRANSCODED_DIR"
     echo "文件夹初始化完成："
     echo "- 原始视频文件夹：$ORIGINAL_DIR"
-    echo "- 转码后视频文件夹：$TRANSCODED_DIR"
+    echo "- 视频文件夹：$TRANSCODED_DIR"
 }
 
 # 安装依赖
@@ -66,11 +66,7 @@ while true; do
     for video in "${video_files[@]}"; do
         if [ -f "$video" ]; then
             echo "正在推流文件：$video"
-            # 优化推流参数以提升画质
-            ffmpeg -re -i "$video" \
-                   -vf "scale=1280:-1" -c:v libx264 -preset medium -crf 23 \
-                   -c:a aac -b:a 128k \
-                   -f flv "$STREAM_URL" || {
+            ffmpeg -re -i "$video" -c copy -f flv "$STREAM_URL" || {
                 echo "推流文件 $video 时发生错误，跳过..."
                 continue
             }
@@ -82,43 +78,6 @@ done
 EOF
     chmod +x "$STREAM_SCRIPT_PATH"
     echo "推流脚本已生成：$STREAM_SCRIPT_PATH"
-}
-
-# 视频转码
-transcode_video() {
-    echo "扫描原始视频文件夹..."
-    videos=("$ORIGINAL_DIR"/*)
-
-    if [ ${#videos[@]} -eq 0 ]; then
-        echo "未检测到原始视频，请将视频放入 $ORIGINAL_DIR 后重试！"
-        return
-    fi
-
-    echo "请选择需要转码的视频："
-    select video in "${videos[@]}"; do
-        if [ -n "$video" ]; then
-            echo "选择的视频是：$video"
-            break
-        else
-            echo "无效选择，请重新输入！"
-        fi
-    done
-
-    echo "选择目标码率："
-    PS3="输入选项："
-    select bitrate in "低（500k）" "中（1000k）" "高（2000k）"; do
-        case $REPLY in
-        1) bitrate="500k"; break ;;
-        2) bitrate="1000k"; break ;;
-        3) bitrate="2000k"; break ;;
-        *) echo "无效选项，请重新输入！" ;;
-        esac
-    done
-
-    output_video="$TRANSCODED_DIR/$(basename "$video")"
-    echo "开始转码，目标码率：$bitrate..."
-    ffmpeg -i "$video" -b:v "$bitrate" -b:a 128k -vf scale=1280:720 "$output_video" -y
-    echo "转码完成，文件保存至：$output_video"
 }
 
 # 配置并启动推流
@@ -157,65 +116,6 @@ stop_stream() {
     echo "所有推流会话已停止。"
 }
 
-# CPU 压力测试
-cpu_stress_test() {
-    echo "开始 CPU 压力测试..."
-    for bitrate in 500k 1000k 2000k; do
-        test_video="$TRANSCODED_DIR/test_$bitrate.mp4"
-        ffmpeg -f lavfi -i testsrc=duration=10:size=1280x720:rate=30 -b:v "$bitrate" -y "$test_video"
-        echo "生成测试视频：$test_video （码率：$bitrate）"
-    done
-    echo "请观察 CPU 使用率，选择合适的码率进行推流。"
-}
-
-# 更新主脚本
-update_scripts() {
-    echo "正在更新主脚本..."
-    curl -L "$GITHUB_MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || {
-        echo "主脚本更新失败，请检查网络连接！"
-        return
-    }
-    chmod +x "$MAIN_SCRIPT_PATH"
-    echo "主脚本更新完成！正在重启脚本..."
-    exec bash "$MAIN_SCRIPT_PATH"
-}
-
-# 卸载脚本及其依赖
-uninstall_script() {
-    echo "====================================="
-    echo "          🛠️ 卸载脚本及依赖工具          "
-    echo "====================================="
-    echo "即将卸载以下内容："
-    echo "1. 脚本安装的依赖（ffmpeg、screen、curl）"
-    echo "2. 所有相关文件夹："
-    echo "   - 原始视频文件夹：$ORIGINAL_DIR"
-    echo "   - 转码后视频文件夹：$TRANSCODED_DIR"
-    echo "   - 脚本本身：$MAIN_SCRIPT_PATH 和 $STREAM_SCRIPT_PATH"
-    echo "====================================="
-
-    read -p "确认卸载吗？(y/N): " confirm
-    if [[ "$confirm" =~ ^[yY]$ ]]; then
-        # 卸载依赖
-        echo "正在卸载依赖工具..."
-        apt remove --purge -y ffmpeg screen curl && apt autoremove -y || {
-            echo "依赖工具卸载失败，请手动检查！"
-        }
-        echo "依赖工具已卸载。"
-
-        # 删除文件夹和脚本
-        echo "删除脚本文件夹和脚本..."
-        rm -rf "$ORIGINAL_DIR" "$TRANSCODED_DIR" "$MAIN_SCRIPT_PATH" "$STREAM_SCRIPT_PATH" || {
-            echo "文件删除失败，请手动检查！"
-        }
-        echo "文件已删除。"
-
-        echo "卸载完成！感谢使用本脚本！"
-        exit 0
-    else
-        echo "卸载已取消。"
-    fi
-}
-
 # 主菜单
 main_menu() {
     while true; do
@@ -225,27 +125,19 @@ main_menu() {
         echo "====================================="
         echo "  1. 安装环境依赖"
         echo "  2. 初始化视频文件夹"
-        echo "  3. 更新主脚本"
-        echo "  4. 转码视频（压缩码率）"
-        echo "  5. 启动推流服务"
-        echo "  6. 停止推流服务"
-        echo "  7. CPU 压力测试"
-        echo "  8. 卸载脚本"
-        echo "  9. 退出脚本"
+        echo "  3. 启动推流服务"
+        echo "  4. 停止推流服务"
+        echo "  5. 退出脚本"
         echo "====================================="
-        echo "请输入选项（1-9）："
+        echo "请输入选项（1-5）："
         read -r choice
 
         case $choice in
         1) install_dependencies ;;
         2) setup_folders ;;
-        3) update_scripts ;;
-        4) transcode_video ;;
-        5) start_stream ;;
-        6) stop_stream ;;
-        7) cpu_stress_test ;;
-        8) uninstall_script ;;  # 添加卸载功能
-        9) echo "退出脚本。"; exit 0 ;;
+        3) start_stream ;;
+        4) stop_stream ;;
+        5) echo "退出脚本。"; exit 0 ;;
         *) echo "无效选项，请重新输入！" ;;
         esac
         echo "按任意键返回主菜单..."
