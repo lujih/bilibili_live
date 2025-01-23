@@ -10,13 +10,12 @@ BOLD="\033[1m"
 
 # 常量定义
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-ORIGINAL_DIR="$SCRIPT_DIR/original_videos"  # 原始视频目录
-TRANSCODED_DIR="$SCRIPT_DIR/videos"        # 转码后视频目录
+VIDEOS_DIR="$SCRIPT_DIR/videos"        # 视频目录
 STREAM_SCRIPT_NAME="stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
 MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
 MAIN_SCRIPT_PATH="$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
-GITHUB_MAIN_SCRIPT_URL="https://github.moeyy.xyz/https://raw.githubusercontent.com/lujih/bilibili_live/main/bilibili_live_manager.sh"
+GITHUB_MAIN_SCRIPT_URL="https://ghfast.top/https://raw.githubusercontent.com/lujih/bilibili_live/main/bilibili_live_manager.sh"
 
 # 打印分隔符
 print_separator() {
@@ -32,21 +31,23 @@ print_title() {
 # 初始化文件夹
 setup_folders() {
     print_title "初始化文件夹"
-    mkdir -p "$ORIGINAL_DIR"
-    mkdir -p "$TRANSCODED_DIR"
+    mkdir -p "$VIDEOS_DIR"
     echo -e "${GREEN}文件夹初始化完成：${RESET}"
-    echo "- 原始视频文件夹：$ORIGINAL_DIR"
-    echo "- 转码后视频文件夹：$TRANSCODED_DIR"
+    echo "- 视频文件夹：$VIDEOS_DIR"
 }
 
 # 安装依赖
 install_dependencies() {
     print_title "安装必要依赖"
     echo -e "${YELLOW}正在安装依赖...${RESET}"
-    apt update && apt install -y ffmpeg screen curl || {
-        echo -e "${RED}依赖安装失败，请检查网络连接！${RESET}"
+    if ! apt update; then
+        echo -e "${RED}更新软件源失败，请检查网络连接！${RESET}"
         exit 1
-    }
+    fi
+    if ! apt install -y ffmpeg screen curl; then
+        echo -e "${RED}依赖安装失败，请手动安装 ffmpeg, screen 和 curl！${RESET}"
+        exit 1
+    fi
     echo -e "${GREEN}依赖安装完成！${RESET}"
 }
 
@@ -58,7 +59,7 @@ generate_stream_script() {
 
 # 哔哩哔哩推流脚本
 STREAM_URL="$1"
-VIDEO_DIR="$(dirname "$(realpath "$0")")/videos"
+VIDEO_DIR="$2"
 
 if [ -z "$STREAM_URL" ]; then
     echo -e "未提供推流地址！"
@@ -106,44 +107,6 @@ EOF
     echo -e "${GREEN}推流脚本已生成：$STREAM_SCRIPT_PATH${RESET}"
 }
 
-# 视频转码
-transcode_video() {
-    print_title "视频转码"
-    echo -e "${YELLOW}扫描原始视频文件夹...${RESET}"
-    videos=("$ORIGINAL_DIR"/*)
-
-    if [ ${#videos[@]} -eq 0 ]; then
-        echo -e "${RED}未检测到原始视频，请将视频放入 $ORIGINAL_DIR 后重试！${RESET}"
-        return
-    fi
-
-    echo -e "${BLUE}请选择需要转码的视频：${RESET}"
-    select video in "${videos[@]}"; do
-        if [ -n "$video" ]; then
-            echo -e "${GREEN}选择的视频是：$video${RESET}"
-            break
-        else
-            echo -e "${RED}无效选择，请重新输入！${RESET}"
-        fi
-    done
-
-    echo -e "${BLUE}请选择目标码率：${RESET}"
-    PS3="输入选项："
-    select bitrate in "低（500k）" "中（1000k）" "高（2000k）"; do
-        case $REPLY in
-        1) bitrate="500k"; break ;;
-        2) bitrate="1000k"; break ;;
-        3) bitrate="2000k"; break ;;
-        *) echo -e "${RED}无效选项，请重新输入！${RESET}" ;;
-        esac
-    done
-
-    output_video="$TRANSCODED_DIR/$(basename "$video")"
-    echo -e "${YELLOW}开始转码，目标码率：$bitrate...${RESET}"
-    ffmpeg -i "$video" -b:v "$bitrate" -b:a 128k -vf scale=1280:720 "$output_video" -y
-    echo -e "${GREEN}转码完成，文件保存至：$output_video${RESET}"
-}
-
 # 配置并启动推流
 start_stream() {
     print_title "开始推流"
@@ -154,12 +117,18 @@ start_stream() {
         return
     fi
 
+    # 简单的推流地址格式验证
+    if [[ ! "$STREAM_URL" =~ ^rtmp://[a-zA-Z0-9./?=&_-]+$ ]]; then
+        echo -e "${RED}推流地址格式不正确，请检查！${RESET}"
+        return
+    fi
+
     # 生成推流脚本
-    generate_stream_script
+    generate_stream_script "$STREAM_URL" "$VIDEOS_DIR"
 
     # 启动推流服务
     echo -e "${GREEN}启动推流服务...${RESET}"
-    screen -dmS live_stream bash "$STREAM_SCRIPT_PATH" "$STREAM_URL"
+    screen -dmS live_stream bash "$STREAM_SCRIPT_PATH" "$STREAM_URL" "$VIDEOS_DIR"
     echo -e "${GREEN}推流已启动，使用 'screen -r live_stream' 查看日志。${RESET}"
 }
 
@@ -204,7 +173,7 @@ uninstall_script() {
     echo -e "${YELLOW}即将卸载以下内容：${RESET}"
     echo "- 脚本本身"
     echo "- 所有相关依赖（ffmpeg、screen、curl）"
-    echo "- 文件夹：$ORIGINAL_DIR 和 $TRANSCODED_DIR"
+    echo "- 文件夹：$VIDEOS_DIR"
 
     read -p "确认卸载吗？(y/N): " confirm
     if [[ "$confirm" =~ ^[yY]$ ]]; then
@@ -213,7 +182,7 @@ uninstall_script() {
             echo -e "${RED}依赖卸载失败，请手动卸载！${RESET}"
         }
 
-        rm -rf "$ORIGINAL_DIR" "$TRANSCODED_DIR" "$SCRIPT_DIR/$STREAM_SCRIPT_NAME" "$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
+        rm -rf "$VIDEOS_DIR" "$SCRIPT_DIR/$STREAM_SCRIPT_NAME" "$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
         
         echo -e "${GREEN}卸载完成！${RESET}"
     else
@@ -223,16 +192,29 @@ uninstall_script() {
 
 # 主菜单
 main_menu() {
-    PS3="选择操作："
-    select option in "安装依赖" "检查更新" "开始推流" "停止推流" "转码视频" "卸载脚本" "退出"; do
+    while true; do
+        clear
+        print_title "哔哩哔哩直播推流管理脚本"
+
+        echo -e "${GREEN}请选择操作：${RESET}"
+        echo -e "${YELLOW}1)${RESET} 安装依赖"
+        echo -e "${YELLOW}2)${RESET} 检查更新"
+        echo -e "${YELLOW}3)${RESET} 开始推流"
+        echo -e "${YELLOW}4)${RESET} 停止推流"
+        echo -e "${YELLOW}5)${RESET} 卸载脚本"
+        echo -e "${YELLOW}6)${RESET} 退出"
+
+        print_separator
+
+        read -p "请输入选项编号：" REPLY
+
         case $REPLY in
         1) install_dependencies ;;
         2) update_scripts ;;
         3) start_stream ;;
         4) stop_stream ;;
-        5) transcode_video ;;
-        6) uninstall_script ;;
-        7) exit ;;
+        5) uninstall_script ;;
+        6) exit 0 ;;
         *) echo -e "${RED}无效选择，请重新输入！${RESET}" ;;
         esac
     done
