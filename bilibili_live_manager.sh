@@ -26,7 +26,7 @@ STREAM_SCRIPT_NAME="stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
 MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
 MAIN_SCRIPT_PATH="$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
-GITHUB_MAIN_SCRIPT_URL="https://github.moeyy.xyz/https://raw.githubusercontent.com/lujih/bilibili_live/main/bilibili_live_manager.sh"
+GITHUB_MAIN_SCRIPT_URL="https://ghfast.top/https://raw.githubusercontent.com/lujih/bilibili_live/main/bilibili_live_manager.sh"
 
 # 打印分隔符
 print_separator() {
