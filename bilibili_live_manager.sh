@@ -10,12 +10,23 @@ BOLD="\033[1m"
 
 # 常量定义
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
+
+# 兼容 realpath
+if ! command -v realpath &> /dev/null; then
+    if command -v readlink &> /dev/null; then
+        realpath() { readlink -f "$@"; }
+    else
+        echo -e "${RED}错误：您的系统缺少 'realpath' 和 'readlink' 命令。请安装它们。${RESET}"
+        exit 1
+    fi
+fi
+
 VIDEOS_DIR="$SCRIPT_DIR/videos"        # 视频目录
 STREAM_SCRIPT_NAME="stream.sh"
 STREAM_SCRIPT_PATH="$SCRIPT_DIR/$STREAM_SCRIPT_NAME"
 MAIN_SCRIPT_NAME="bilibili_live_manager.sh"
 MAIN_SCRIPT_PATH="$SCRIPT_DIR/$MAIN_SCRIPT_NAME"
-GITHUB_MAIN_SCRIPT_URL="https://ghfast.top/https://raw.githubusercontent.com/lujih/bilibili_live/main/bilibili_live_manager.sh"
+GITHUB_MAIN_SCRIPT_URL="https://github.moeyy.xyz/https://raw.githubusercontent.com/lujih/bilibili_live/main/bilibili_live_manager.sh"
 
 # 打印分隔符
 print_separator() {
@@ -51,6 +62,11 @@ install_dependencies() {
     echo -e "${GREEN}依赖安装完成！${RESET}"
 }
 
+# 打印信息
+print_info() {
+    echo -e "$1"
+}
+
 # 本地生成推流脚本
 generate_stream_script() {
     print_title "生成推流脚本"
@@ -62,16 +78,16 @@ STREAM_URL="$1"
 VIDEO_DIR="$2"
 
 if [ -z "$STREAM_URL" ]; then
-    echo -e "未提供推流地址！"
+    print_info "未提供推流地址！"
     exit 1
 fi
 
-echo -e "推流地址：$STREAM_URL"
-echo -e "视频目录：$VIDEO_DIR"
+print_info "推流地址：$STREAM_URL"
+print_info "视频目录：$VIDEO_DIR"
 
 # 检查视频目录是否存在
 if [ ! -d "$VIDEO_DIR" ]; then
-    echo -e "视频目录不存在：$VIDEO_DIR"
+    print_info "视频目录不存在：$VIDEO_DIR"
     exit 1
 fi
 
@@ -81,26 +97,26 @@ while true; do
     video_count=${#video_files[@]}
 
     if [ $video_count -eq 0 ]; then
-        echo -e "视频目录为空，请添加视频后重试..."
+        print_info "视频目录为空，请添加视频后重试..."
         sleep 10
         continue
     fi
 
     for video in "${video_files[@]}"; do
         if [ -f "$video" ]; then
-            echo -e "正在推流文件：$video"
+            print_info "正在推流文件：$video"
             
             # 使用 copy 参数避免转码，直接推流
             ffmpeg -re -i "$video" \
                    -c:v copy -c:a copy \
                    -f flv "$STREAM_URL" || {
-                echo -e "推流文件 $video 时发生错误，跳过..."
+                print_info "推流文件 $video 时发生错误，跳过..."
                 continue
             }
         fi
     done
 
-    echo -e "所有视频推流完成，将重新从第一个视频开始..."
+    print_info "所有视频推流完成，将重新从第一个视频开始..."
 done
 EOF
     chmod +x "$STREAM_SCRIPT_PATH"
@@ -118,7 +134,7 @@ start_stream() {
     fi
 
     # 简单的推流地址格式验证
-    if [[ ! "$STREAM_URL" =~ ^rtmp://[a-zA-Z0-9./?=&_-]+$ ]]; then
+    if [[ ! "$STREAM_URL" =~ ^rtmp://[a-zA-Z0-9./?_=-]+$ ]]; then
         echo -e "${RED}推流地址格式不正确，请检查！${RESET}"
         return
     fi
